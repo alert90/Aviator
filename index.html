@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviator Prediction App</title>
+    <!-- Tailwind CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+
+<body class="bg-gray-100">
+    <div id="app" class="container mx-auto p-4">
+        <h1 class="text-3xl font-semibold mb-4">Aviator Prediction</h1>
+        <input type="text" v-model="inputString" @keyup.enter="predictMultiplier" placeholder="Enter previous multiplier" class="w-full mb-4 px-3 py-2 rounded-md border border-gray-300">
+        <p v-if="result" class="text-lg font-semibold bg-green-100 text-green-800 rounded-md p-4 mb-4">{{ result }}</p>
+    </div>
+
+    <!-- Vue.js -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                inputString: '',
+                result: ''
+            },
+            methods: {
+                predictMultiplier() {
+                    if (this.inputString.trim() !== '') {
+                        this.result = this.hashAndPredict(this.inputString);
+                    }
+                },
+                hashAndPredict(input) {
+                    let hash = this.sha512(input);
+                    let multiplier = parseInt(hash.substring(0, 7), 16) % 100;
+                    return multiplier;
+                },
+                sha512(input) {
+                    function rotl(n, b) {
+                        return (n << b) | (n >>> (32 - b));
+                    }
+
+                    function toHex(val) {
+                        let hex = "";
+                        for (let i = 7; i >= 0; i--) {
+                            hex += ((val >>> (i * 4)) & 0x0f).toString(16);
+                        }
+                        return hex;
+                    }
+
+                    let H = [
+                        0x6a09e667,
+                        0xbb67ae85,
+                        0x3c6ef372,
+                        0xa54ff53a,
+                        0x510e527f,
+                        0x9b05688c,
+                        0x1f83d9ab,
+                        0x5be0cd19
+                    ];
+
+                    let K = "428a2f98d728ae22", W = [], a, b, c, d, e, f, g, h,
+                        T1, T2;
+
+                    input += String.fromCharCode(0x80);
+
+                    while (input.length % 64 !== 56) {
+                        input += String.fromCharCode(0);
+                    }
+
+                    input += String.fromCharCode(0);
+                    input += String.fromCharCode(0);
+                    input += String.fromCharCode(0);
+                    input += String.fromCharCode(0);
+                    input += String.fromCharCode(0);
+                    input += String.fromCharCode(0);
+                    input += String.fromCharCode((input.length) / Math.pow(2, 29));
+                    input += String.fromCharCode((input.length) / Math.pow(2, 21));
+                    input += String.fromCharCode((input.length) / Math.pow(2, 13));
+                    input += String.fromCharCode((input.length) / Math.pow(2, 5));
+
+                    while (input.length) {
+                        W.push(input.substring(0, 64));
+                        input = input.substring(64);
+                    }
+
+                    while (W.length < 80) {
+                        W.push(0);
+                    }
+
+                    for (let i = 16; i < 80; i++) {
+                        W[i] = rotl(W[i - 3] ^ W[i - 8] ^ W[i - 14] ^ W[i - 16], 1)
+                    }
+
+                    a = H[0];
+                    b = H[1];
+                    c = H[2];
+                    d = H[3];
+                    e = H[4];
+                    f = H[5];
+                    g = H[6];
+                    h = H[7];
+
+                    for (let i = 0; i < 80; i++) {
+                        T1 = h + (rotl(e, 5)) +
+                            ((i < 20) ? ((b & c) ^ ((~b) & d) + 0x5a827999) :
+                                (i < 40 ? (b ^ c ^ d + 0x6ed9eba1) :
+                                    (i < 60 ? ((b & c) ^ (b & d) ^ (c & d) + 0x8f1bbcdc) :
+                                        (b ^ c ^ d + 0xca62c1d6))));
+                        T2 = (rotl(a, 30));
+                        h = g;
+                        g = f;
+                        f = e;
+                        e = d + T1;
+                        d = c;
+                        c = b;
+                        b = a;
+                        a = T1 + T2;
+                    }
+
+                    H[0] = H[0] + a;
+                    H[1] = H[1] + b;
+                    H[2] = H[2] + c;
+                    H[3] = H[3] + d;
+                    H[4] = H[4] + e;
+                    H[5] = H[5] + f;
+                    H[6] = H[6] + g;
+                    H[7] = H[7] + h;
+
+                    let result = "";
+                    for (let i = 0; i < 8; i++) {
+                        result += toHex(H[i]);
+                    }
+
+                    return result;
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
+
